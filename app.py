@@ -134,7 +134,10 @@ def main_window(list_of_files, folder) -> None:
             break
 
         if event == 'Generate Timetable':
-            periodNum, activeDays, repeatCount, fout = setup1()
+            if setup1() == None:
+                break
+            else:
+                periodNum, activeDays, repeatCount, fout = setup1()
             if not os.path.exists(rf'{folder}\class_timetables'):
                 os.mkdir(rf'{folder}\class_timetables')
             timetableGenerator(rf'{folder}\class_timetables', periodNum,
@@ -211,6 +214,7 @@ def main_window(list_of_files, folder) -> None:
 def main():
     k = setup('Select the folder containing the timetables')
     if not os.path.exists(rf'{k}\personal_timetables'):
+
         fileList = listdir(k)
         main_window(fileList, k)
     else:
