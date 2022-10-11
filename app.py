@@ -175,10 +175,10 @@ def main_window(list_of_files, folder) -> None:
                 except ValueError:
                     sg.popup('Enter a value for the period', title='Error')
                     continue
-                # except IndexError:
-                #     sg.popup(
-                #         'Enter a value for the period within the correct number of periods', title='Error')
-                #     continue
+                except IndexError:
+                    sg.popup(
+                        'Enter a value for the period within the correct number of periods', title='Error')
+                    continue
                 except KeyError:
                     sg.popup(
                         'No periods on this day', title='Error')
@@ -192,10 +192,10 @@ def main_window(list_of_files, folder) -> None:
                     sg.popup('Enter a correct value for the period',
                              title='Error')
                     continue
-                # except IndexError:
-                #     sg.popup(
-                #         'Enter a value for the period within the correct number of periods', title='Error')
-                #     continue
+                except IndexError:
+                    sg.popup(
+                        'Enter a value for the period within the correct number of periods', title='Error')
+                    continue
                 except KeyError:
                     sg.popup(
                         'No periods on this day', title='Error')
