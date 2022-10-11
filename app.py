@@ -1,12 +1,8 @@
-from distutils.command.config import config
 import json
 import os
-from time import time
-from tkinter import Button
 import PySimpleGUI as sg
 from file_parser.backend import checkClashes, viewFreeAndBusy, createNewTimetable, createPersonalTimetable
 from os import listdir
-from sys import exit
 
 sg.theme('reddit')
 
@@ -134,10 +130,11 @@ def main_window(list_of_files, folder) -> None:
             break
 
         if event == 'Generate Timetable':
-            if setup1() == None:
+            s = setup1()
+            if s == None:
                 break
             else:
-                periodNum, activeDays, repeatCount, fout = setup1()
+                periodNum, activeDays, repeatCount, fout = s
             if not os.path.exists(rf'{folder}\class_timetables'):
                 os.mkdir(rf'{folder}\class_timetables')
             timetableGenerator(rf'{folder}\class_timetables', periodNum,
@@ -174,14 +171,14 @@ def main_window(list_of_files, folder) -> None:
             if fn2:
                 try:
                     res = viewFreeAndBusy(
-                        folder=rf'{folder}\personal_timetables', day=day[0], period_number=int(period), view_busy=False)
+                        folder=folder, day=day[0], period_number=int(period), view_busy=False)
                 except ValueError:
                     sg.popup('Enter a value for the period', title='Error')
                     continue
-                except IndexError:
-                    sg.popup(
-                        'Enter a value for the period within the correct number of periods', title='Error')
-                    continue
+                # except IndexError:
+                #     sg.popup(
+                #         'Enter a value for the period within the correct number of periods', title='Error')
+                #     continue
                 except KeyError:
                     sg.popup(
                         'No periods on this day', title='Error')
@@ -190,15 +187,15 @@ def main_window(list_of_files, folder) -> None:
             if fn3:
                 try:
                     res = viewFreeAndBusy(
-                        folder=rf'{folder}\personal_timetables', day=day[0], period_number=int(period), view_busy=True)
+                        folder=folder, day=day[0], period_number=int(period), view_busy=True)
                 except ValueError:
                     sg.popup('Enter a correct value for the period',
                              title='Error')
                     continue
-                except IndexError:
-                    sg.popup(
-                        'Enter a value for the period within the correct number of periods', title='Error')
-                    continue
+                # except IndexError:
+                #     sg.popup(
+                #         'Enter a value for the period within the correct number of periods', title='Error')
+                #     continue
                 except KeyError:
                     sg.popup(
                         'No periods on this day', title='Error')
@@ -213,13 +210,8 @@ def main_window(list_of_files, folder) -> None:
 
 def main():
     k = setup('Select the folder containing the timetables')
-    if not os.path.exists(rf'{k}\personal_timetables'):
-
-        fileList = listdir(k)
-        main_window(fileList, k)
-    else:
-        fileList = listdir(rf'{k}\personal_timetables')
-    main_window(fileList, rf'{k}\personal_timetables')
+    fileList = listdir(k)
+    main_window(fileList, k)
 
 # Scope: Compare timetable of one teacher to another for checking clashes. Most manipulations will be performed only on 2 timetables. It is also possible to generate boilerplate timetables that can be edited as the user sees fit. Any clashes that arise can be checked using the app.
 
