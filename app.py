@@ -64,9 +64,12 @@ def setup1():
 
 def timetableGenerator(folder, periodNum, activeDays, repeatCount, fout):
     teacherCreds = {}
+    counts = []
+    subjects = []
     layout = [
         [sg.Text("Teacher's Name"), sg.InputText()],
         [sg.Text("Teacher's Subject"), sg.InputText()],
+        [sg.Text("Number of periods per week"), sg.InputText()],
         [sg.Button('Add Teacher'), sg.Button('Generate Timetable'),
          sg.Button('Cancel All Inputs'), sg.Button('Exit')]
     ]
@@ -80,24 +83,31 @@ def timetableGenerator(folder, periodNum, activeDays, repeatCount, fout):
         if event == 'Exit':
             break
 
-        tName, tSub = list(values.values())
+        tName, tSub, periodCount = list(values.values())
 
         if event == 'Add Teacher':
             teacherCreds[tSub] = tName
+            counts.append(int(periodCount))
 
         if event == 'Cancel All Inputs':
             teacherCreds.clear()
+            counts.clear()
             sg.popup('Inputs Cleared Successfully', title='Success')
 
         try:
             if event == 'Generate Timetable':
-                createNewTimetable(int(periodNum), int(activeDays),
-                                   folder, fout, teacherCreds, int(repeatCount))
+                createNewTimetable(teacherCreds, counts, int(periodNum), int(
+                    activeDays), int(repeatCount), fout, folder)
                 sg.popup('Timetable generated Successfully', title='Success')
                 break
         except IndexError:
             sg.popup('Number of periods too less. Please try again.',
                      title='Error')
+            break
+        except ValueError:
+            sg.popup(
+                'The sum of the values for the number of periods entered is not equal to the total number of periods of the week')
+            break
 
         # sg.popup('An Error occured. Please try again.', title='Error')
 

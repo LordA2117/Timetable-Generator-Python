@@ -70,15 +70,61 @@ def style_worksheet(ws, cell_range):  # Styling worksheet
             cell.alignment = Alignment(horizontal='center')
 
 
-# Unused args: teacher, subject, number_of_days, periods_in_a_day
-def createNewTimetable(number_of_periods, number_of_days, folder, name, teacher_and_period, max_occurences, allPeriods=False):
+# counts = number of times subject shud occur per week. Must be iterable
+def generate_raw(subjects, counts):
+    out = []
+    for i in range(len(subjects)):
+        out.extend([subjects[i]]*counts[i])
+    return out
+
+
+# test = generate_raw(subjects, counts)  # ! Logging
+# print(test)
+
+
+def generateTimetable(matrix_of_periods, number_of_periods, number_of_days, repeatCount):
+    from pprint import pprint
+    import random
+    out = []
+    for i in range(number_of_days):
+        out.append([None]*number_of_periods)
+    # pprint(len(out))
+
+    if len(matrix_of_periods) != (len(out)*len(out[0])):
+        raise(ValueError(
+            'Number of periods specified for the week doesn\'t match number of periods in the week'))
+
+    coordinates = []
+    for i in range(len(out)):
+        rowNumber = i
+        index = 0
+        while index < len(out[rowNumber]):
+            coordinates.append((rowNumber, index))
+            index += 1
+    # pprint(len(coordinates))
+
+    for subject in matrix_of_periods:
+        coords = random.choice(coordinates)
+        # print(coords)
+        if out[coords[0]].count(subject) >= repeatCount:
+            coords = random.choice(coordinates)
+            # print(f'Changed coordinates to {coords}')
+        out[coords[0]][coords[1]] = subject
+        coordinates.remove(coords)
+        # print(len(coordinates))
+
+    # pprint(out)
+    return out
+
+
+# * Now generates timetables using 2 different functions
+def createNewTimetable(teachers_and_periods, counts, number_of_periods, number_of_days, repeatCount, filename, foldername):
+    from pprint import pprint
     import string
     import xlsxwriter
     from openpyxl import load_workbook
-    import random
-    from copy import deepcopy
-    import os
     import json
+    import os
 
     colLetters = [letter for letter in string.ascii_uppercase]
 
@@ -87,7 +133,7 @@ def createNewTimetable(number_of_periods, number_of_days, folder, name, teacher_
 
     worksheet_col1 = ['Days'] + days_of_the_week[:number_of_days]
 
-    workbook = xlsxwriter.Workbook(rf'{folder}/{name}.xlsx')
+    workbook = xlsxwriter.Workbook(rf'{foldername}/{filename}.xlsx')
     worksheet = workbook.add_worksheet('Timetable')
 
     for i in range(number_of_days + 1):
@@ -97,29 +143,23 @@ def createNewTimetable(number_of_periods, number_of_days, folder, name, teacher_
         worksheet.write(0, i, i)
     workbook.close()
 
-    schoolDays = days_of_the_week[:number_of_days]
+    subjects = list(teachers_and_periods.keys())
+    raw = generate_raw(subjects=subjects, counts=counts)
+    # print(len(raw))
+    newTimetable = generateTimetable(
+        raw, number_of_periods, number_of_days, repeatCount)
 
-    wb = load_workbook(filename=rf'{folder}/{name}.xlsx')
-    ws = wb.active
-
-    subjects = list(teacher_and_period.keys())
+    # pprint(newTimetable)
 
     raw_table = {}
 
-    for day in schoolDays:
-        i = 0
-        periods = []
-        available_periods = deepcopy(subjects)
-        while i < number_of_periods:
-            period = random.choice(available_periods)
-            numPeriod = periods.count(period)
-            if numPeriod < max_occurences:
-                periods.append(period)
-            else:
-                available_periods.remove(period)
-                continue
-            i += 1
-        raw_table[day] = periods
+    schoolDays = days_of_the_week[:number_of_days]
+    for i in range(len(newTimetable)):
+        raw_table[schoolDays[i]] = newTimetable[i]
+    # pprint(raw_table)
+
+    wb = load_workbook(filename=rf'{foldername}/{filename}.xlsx')
+    ws = wb.active
 
     keys = raw_table.keys()
     rows = list(range(2, ws.max_row+1))
@@ -131,35 +171,37 @@ def createNewTimetable(number_of_periods, number_of_days, folder, name, teacher_
         for j in range(1, len(p)):
             p[j].value = row[j]
 
-    style_worksheet(ws, f'A1:{colLetters[ws.max_column - 1]}{ws.max_row}')
+    # style_worksheet(ws, f'A1:{colLetters[ws.max_column - 1]}{ws.max_row}')
 
     if not os.path.exists('config.json'):
         with open('config.json', mode='w') as file:
-            file.write(json.dumps(teacher_and_period))
+            file.write(json.dumps(teachers_and_periods))
     else:
         with open('config.json', mode='r+') as file:
             data = json.load(file)
 
-        data.update(teacher_and_period)
+        data.update(teachers_and_periods)
 
         with open('config.json', mode='w') as file:
             file.write(json.dumps(data))
-    wb.save(rf'{folder}/{name}.xlsx')
+    wb.save(rf'{foldername}/{filename}.xlsx')
 
 
-teachersAndSubjects = {
-    'Maths(SU)': 'Susanna Abraham',
-    'Maths(GP)': 'Ganesaperumal B',
-    'Chemistry(B)': 'Bini P Kuriakose',
-    'English(B)': 'Bhaswati Chattopadhyay',
-    'Computer(J)': 'Jones Solomon Roche',
-    'Biology(S)': 'Swami',
-    'Physics(SS)': 'Susan Sobi',
-    'PT(M)': 'Maruthupandian'
-}  # Test data
+# teacherDict = {
+#     'Maths(SU)': 'Susanna Abraham',
+#     'Maths(GP)': 'Ganesaperumal B',
+#     'Physics(S)': 'Susan Sobi',
+#     'Chemistry(B)': 'Bini P Kuriakose',
+#     'Computer(J)': 'Jones Solomon Roche',
+#     'PT(M)': 'Maruthupandian',
+#     'Art(S)': 'Sashi',
+#     'Biology(S)': 'Swami',
+#     'Music(M)': 'Manuel'
+# }  #? Test data
 
-# createNewTimetable(
-#     8, 5, r"./", 'spam', teachersAndSubjects, 2)
+# counts = (4, 4, 8, 8, 6, 2, 2, 5, 1)
+
+# createNewTimetable(teacherDict, counts, 8, 5, 2, 'eggs', './')
 
 
 # Folder = destination folder
@@ -232,3 +274,5 @@ def createPersonalTimetable(folder, name, timetables_folder, number_of_days, num
 
 # createPersonalTimetable('./', "Ganesaperumal B",
 #                         r'C:\Users\abhin\OneDrive\Desktop\Timetables', 5, 8)
+
+# TODO: Add the new timetable generator to the final gui and make changes accordingly
