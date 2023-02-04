@@ -171,7 +171,7 @@ def createNewTimetable(teachers_and_periods, counts, number_of_periods, number_o
         for j in range(1, len(p)):
             p[j].value = row[j]
 
-    # style_worksheet(ws, f'A1:{colLetters[ws.max_column - 1]}{ws.max_row}')
+    style_worksheet(ws, f'A1:{colLetters[ws.max_column - 1]}{ws.max_row}')
 
     if not os.path.exists('config.json'):
         with open('config.json', mode='w') as file:
